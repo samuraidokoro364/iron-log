@@ -3,6 +3,7 @@
     "private": true,
     "version": "1.0.0",
     "type": "module",
+    "homepage": "https://samuraidokoro364.github.io/iron-log",
     "scripts": {
         "dev": "vite",
         "build": "tsc -b && vite build",
