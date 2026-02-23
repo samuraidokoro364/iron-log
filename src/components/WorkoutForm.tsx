@@ -32,22 +32,39 @@ export default function WorkoutForm({ onSaved }: Props) {
         });
     }, [bodyPart]);
 
-    const canSave = exercise !== '' && weightKg !== '' && reps !== '';
+    const canSave = exercise !== '' && weightKg !== '';
+
+    // "10/8/n" → [10, 8, 0] のようにパース
+    const parseReps = (input: string): number[] => {
+        if (input.trim() === '') return [0];
+        return input.split('/').map((s) => {
+            const trimmed = s.trim();
+            if (trimmed === '' || trimmed.toLowerCase() === 'n') return 0;
+            const num = parseInt(trimmed, 10);
+            return isNaN(num) ? 0 : num;
+        });
+    };
 
     const handleSave = async () => {
         if (!canSave || saving) return;
         setSaving(true);
         try {
-            await addWorkout({
-                id: crypto.randomUUID(),
-                bodyPart,
-                exercise,
-                weightKg: parseFloat(weightKg),
-                reps: parseInt(reps, 10),
-                note: note.trim(),
-                recordedAt: recordedAt.replace('T', ' '),
-            });
-            setWeightKg('');
+            const repsList = parseReps(reps);
+            const weight = parseFloat(weightKg);
+            const noteText = note.trim();
+            const timestamp = recordedAt.replace('T', ' ');
+
+            for (const r of repsList) {
+                await addWorkout({
+                    id: crypto.randomUUID(),
+                    bodyPart,
+                    exercise,
+                    weightKg: weight,
+                    reps: r,
+                    note: noteText,
+                    recordedAt: timestamp,
+                });
+            }
             setReps('');
             setNote('');
             setRecordedAt(formatNow());
@@ -153,12 +170,12 @@ export default function WorkoutForm({ onSaved }: Props) {
                     />
                 </div>
                 <div className="form-row">
-                    <label className="form-label">回数</label>
+                    <label className="form-label">回数（/ で複数セット）</label>
                     <input
-                        type="number"
+                        type="text"
                         className="form-input"
                         inputMode="numeric"
-                        placeholder="10"
+                        placeholder="10/8/n"
                         value={reps}
                         onChange={(e) => setReps(e.target.value)}
                     />
