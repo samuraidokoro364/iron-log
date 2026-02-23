@@ -19,17 +19,47 @@ function formatDateLabel(dateStr: string): string {
     return `${d.getMonth() + 1}/${d.getDate()}（${days[d.getDay()]}）`;
 }
 
+// 同じ種目+重量でまとめたグループ
+interface ExerciseGroup {
+    exercise: string;
+    weightKg: number;
+    reps: number[];       // [10, 8, 0] のように
+    entries: WorkoutEntry[]; // 元のエントリ（削除用）
+    note: string;
+}
+
+function groupByExercise(entries: WorkoutEntry[]): ExerciseGroup[] {
+    const map = new Map<string, ExerciseGroup>();
+    for (const e of entries) {
+        const key = `${e.exercise}|${e.weightKg}`;
+        if (!map.has(key)) {
+            map.set(key, {
+                exercise: e.exercise,
+                weightKg: e.weightKg,
+                reps: [],
+                entries: [],
+                note: '',
+            });
+        }
+        const g = map.get(key)!;
+        g.reps.push(e.reps);
+        g.entries.push(e);
+        if (e.note && !g.note) g.note = e.note;
+    }
+    return Array.from(map.values());
+}
+
 interface GroupedData {
     date: string;
     dateLabel: string;
     bodyPartGroups: {
         bodyPart: string;
         entries: WorkoutEntry[];
+        exerciseGroups: ExerciseGroup[];
     }[];
 }
 
 function groupEntries(entries: WorkoutEntry[]): GroupedData[] {
-    // 日付ごとにグループ化
     const dateMap = new Map<string, WorkoutEntry[]>();
     for (const e of entries) {
         const date = extractDate(e.recordedAt);
@@ -37,12 +67,10 @@ function groupEntries(entries: WorkoutEntry[]): GroupedData[] {
         dateMap.get(date)!.push(e);
     }
 
-    // 日付を新しい順にソート
     const sortedDates = Array.from(dateMap.keys()).sort((a, b) => b.localeCompare(a));
 
     return sortedDates.map((date) => {
         const dayEntries = dateMap.get(date)!;
-        // 部位ごとにグループ化（出現順を維持）
         const partMap = new Map<string, WorkoutEntry[]>();
         for (const e of dayEntries) {
             if (!partMap.has(e.bodyPart)) partMap.set(e.bodyPart, []);
@@ -54,6 +82,7 @@ function groupEntries(entries: WorkoutEntry[]): GroupedData[] {
             bodyPartGroups: Array.from(partMap.entries()).map(([bodyPart, entries]) => ({
                 bodyPart,
                 entries,
+                exerciseGroups: groupByExercise(entries),
             })),
         };
     });
@@ -62,7 +91,6 @@ function groupEntries(entries: WorkoutEntry[]): GroupedData[] {
 export default function WorkoutList({ onDeleted }: Props) {
     const [entries, setEntries] = useState<WorkoutEntry[]>([]);
     const [loading, setLoading] = useState(true);
-    // 展開中のグループを管理 (key: "date|bodyPart")
     const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
     useEffect(() => {
@@ -74,6 +102,13 @@ export default function WorkoutList({ onDeleted }: Props) {
 
     const handleDelete = async (id: string) => {
         await deleteWorkout(id);
+        onDeleted();
+    };
+
+    const handleDeleteGroup = async (group: ExerciseGroup) => {
+        for (const e of group.entries) {
+            await deleteWorkout(e.id);
+        }
         onDeleted();
     };
 
@@ -118,22 +153,26 @@ export default function WorkoutList({ onDeleted }: Props) {
                                         </button>
                                         {isOpen && (
                                             <div className="history-part-detail">
-                                                {pg.entries.map((e) => (
-                                                    <div key={e.id} className="history-detail-row">
+                                                {pg.exerciseGroups.map((eg, i) => (
+                                                    <div key={i} className="history-detail-row">
                                                         <div className="history-detail-main">
-                                                            <span className="history-detail-exercise">{e.exercise}</span>
+                                                            <span className="history-detail-exercise">{eg.exercise}</span>
                                                             <span className="history-detail-values">
-                                                                {e.weightKg}
+                                                                {eg.weightKg}
                                                                 <span className="unit"> kg</span>
                                                                 {' × '}
-                                                                {e.reps === 0 ? 'n' : e.reps}
-                                                                <span className="unit"> reps</span>
+                                                                {eg.reps.map((r, j) => (
+                                                                    <span key={j}>
+                                                                        {j > 0 && ' / '}
+                                                                        {r === 0 ? 'n' : r}
+                                                                    </span>
+                                                                ))}
                                                             </span>
                                                         </div>
-                                                        {e.note && <div className="history-detail-note">{e.note}</div>}
+                                                        {eg.note && <div className="history-detail-note">{eg.note}</div>}
                                                         <button
                                                             className="btn-danger"
-                                                            onClick={() => handleDelete(e.id)}
+                                                            onClick={() => handleDeleteGroup(eg)}
                                                         >
                                                             削除
                                                         </button>
