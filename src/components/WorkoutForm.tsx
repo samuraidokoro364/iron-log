@@ -34,13 +34,12 @@ export default function WorkoutForm({ onSaved }: Props) {
 
     const canSave = exercise !== '' && weightKg !== '';
 
-    // "10/8/n" → [10, 8, 0] のようにパース
+    // "10 8 n" → [10, 8, 0] のようにパース（スペースまたは/で区切り）
     const parseReps = (input: string): number[] => {
         if (input.trim() === '') return [0];
-        return input.split('/').map((s) => {
-            const trimmed = s.trim();
-            if (trimmed === '' || trimmed.toLowerCase() === 'n') return 0;
-            const num = parseInt(trimmed, 10);
+        return input.split(/[\s\/]+/).filter(Boolean).map((s) => {
+            if (s.toLowerCase() === 'n') return 0;
+            const num = parseInt(s, 10);
             return isNaN(num) ? 0 : num;
         });
     };
@@ -170,12 +169,12 @@ export default function WorkoutForm({ onSaved }: Props) {
                     />
                 </div>
                 <div className="form-row">
-                    <label className="form-label">回数（/ で複数セット）</label>
+                    <label className="form-label">回数（スペースで複数セット）</label>
                     <input
                         type="text"
                         className="form-input"
                         inputMode="numeric"
-                        placeholder="10/8/n"
+                        placeholder="10 8 n"
                         value={reps}
                         onChange={(e) => setReps(e.target.value)}
                     />
