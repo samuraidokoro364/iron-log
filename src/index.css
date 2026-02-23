@@ -298,6 +298,95 @@ h3 {
     color: var(--accent);
 }
 
+/* === Set Input (Multi-set buttons) === */
+.sets-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.set-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    background: rgba(192, 57, 43, 0.12);
+    border: 1px solid rgba(192, 57, 43, 0.25);
+    border-radius: var(--radius);
+    color: var(--accent);
+    font-family: var(--font);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.set-chip-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0 2px;
+    -webkit-tap-highlight-color: transparent;
+    line-height: 1;
+}
+
+.set-chip-remove:active {
+    color: var(--danger);
+}
+
+.set-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.set-reps-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.btn-set-add {
+    padding: 12px 14px;
+    background: var(--accent);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s;
+}
+
+.btn-set-add:active {
+    background: var(--accent-hover);
+}
+
+.btn-set-n {
+    padding: 12px 14px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: var(--font);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.btn-set-n:active {
+    border-color: var(--border-focus);
+    color: var(--text-primary);
+}
+
 /* === List / History === */
 .history-section {
     margin-top: 8px;

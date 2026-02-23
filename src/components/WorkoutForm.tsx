@@ -18,6 +18,9 @@ export default function WorkoutForm({ onSaved }: Props) {
     const [recordedAt, setRecordedAt] = useState(formatNow());
     const [saving, setSaving] = useState(false);
 
+    // セット管理: number[] — 0 は "n" を意味する
+    const [sets, setSets] = useState<number[]>([]);
+
     // 新規種目追加
     const [addingExercise, setAddingExercise] = useState(false);
     const [newExerciseName, setNewExerciseName] = useState('');
@@ -32,28 +35,35 @@ export default function WorkoutForm({ onSaved }: Props) {
         });
     }, [bodyPart]);
 
-    const canSave = exercise !== '' && weightKg !== '';
+    const canSave = exercise !== '' && weightKg !== '' && sets.length > 0;
 
-    // "10 8 n" → [10, 8, 0] のようにパース（スペースまたは/で区切り）
-    const parseReps = (input: string): number[] => {
-        if (input.trim() === '') return [0];
-        return input.split(/[\s\/]+/).filter(Boolean).map((s) => {
-            if (s.toLowerCase() === 'n') return 0;
-            const num = parseInt(s, 10);
-            return isNaN(num) ? 0 : num;
-        });
+    // セット追加（数字入力 → ＋セット）
+    const handleAddSet = () => {
+        const val = reps.trim() === '' ? 0 : parseInt(reps, 10);
+        setSets((prev) => [...prev, isNaN(val) ? 0 : val]);
+        setReps('');
+    };
+
+    // n（0回）セット追加
+    const handleAddN = () => {
+        setSets((prev) => [...prev, 0]);
+        setReps('');
+    };
+
+    // セット削除
+    const handleRemoveSet = (index: number) => {
+        setSets((prev) => prev.filter((_, i) => i !== index));
     };
 
     const handleSave = async () => {
         if (!canSave || saving) return;
         setSaving(true);
         try {
-            const repsList = parseReps(reps);
             const weight = parseFloat(weightKg);
             const noteText = note.trim();
             const timestamp = recordedAt.replace('T', ' ');
 
-            for (const r of repsList) {
+            for (const r of sets) {
                 await addWorkout({
                     id: crypto.randomUUID(),
                     bodyPart,
@@ -64,6 +74,7 @@ export default function WorkoutForm({ onSaved }: Props) {
                     recordedAt: timestamp,
                 });
             }
+            setSets([]);
             setReps('');
             setNote('');
             setRecordedAt(formatNow());
@@ -154,30 +165,65 @@ export default function WorkoutForm({ onSaved }: Props) {
                 )}
             </div>
 
-            {/* 重量 / 回数 */}
-            <div className="form-input-row">
-                <div className="form-row">
-                    <label className="form-label">重量 (kg)</label>
+            {/* 重量 */}
+            <div className="form-row">
+                <label className="form-label">重量 (kg)</label>
+                <input
+                    type="number"
+                    className="form-input"
+                    inputMode="decimal"
+                    step="0.5"
+                    placeholder="60"
+                    value={weightKg}
+                    onChange={(e) => setWeightKg(e.target.value)}
+                />
+            </div>
+
+            {/* セット入力エリア */}
+            <div className="form-row">
+                <label className="form-label">セット</label>
+
+                {/* 追加済みセットのチップ表示 */}
+                {sets.length > 0 && (
+                    <div className="sets-chips">
+                        {sets.map((s, i) => (
+                            <span key={i} className="set-chip">
+                                {s === 0 ? 'n' : s}
+                                <button
+                                    className="set-chip-remove"
+                                    onClick={() => handleRemoveSet(i)}
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        ))}
+                    </div>
+                )}
+
+                {/* 回数入力 + ボタン */}
+                <div className="set-input-row">
                     <input
                         type="number"
-                        className="form-input"
-                        inputMode="decimal"
-                        step="0.5"
-                        placeholder="60"
-                        value={weightKg}
-                        onChange={(e) => setWeightKg(e.target.value)}
-                    />
-                </div>
-                <div className="form-row">
-                    <label className="form-label">回数（スペースで複数セット）</label>
-                    <input
-                        type="text"
-                        className="form-input"
+                        className="form-input set-reps-input"
                         inputMode="numeric"
-                        placeholder="10 8 n"
+                        placeholder="回数"
                         value={reps}
                         onChange={(e) => setReps(e.target.value)}
                     />
+                    <button
+                        type="button"
+                        className="btn-set-add"
+                        onClick={handleAddSet}
+                    >
+                        ＋セット
+                    </button>
+                    <button
+                        type="button"
+                        className="btn-set-n"
+                        onClick={handleAddN}
+                    >
+                        n
+                    </button>
                 </div>
             </div>
 
@@ -195,7 +241,7 @@ export default function WorkoutForm({ onSaved }: Props) {
             <DateTimeInput value={recordedAt} onChange={setRecordedAt} />
 
             <button className="btn-primary" disabled={!canSave || saving} onClick={handleSave}>
-                {saving ? '保存中...' : '記録する'}
+                {saving ? '保存中...' : `記録する（${sets.length}セット）`}
             </button>
         </div>
     );
