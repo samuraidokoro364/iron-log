@@ -97,3 +97,36 @@ export async function addExercise(bodyPart: BodyPart, exerciseName: string): Pro
     }
     return current;
 }
+
+// === データエクスポート・インポート (共有用) ===
+
+export async function exportDataAsJSON(): Promise<string> {
+    const db = await getDB();
+    const bodyMetrics = await db.getAll('bodyMetrics');
+    const workouts = await db.getAll('workouts');
+    const exercises = await db.getAll('exercises');
+
+    const data = { bodyMetrics, workouts, exercises };
+    return JSON.stringify(data);
+}
+
+export async function importDataFromJSON(jsonStr: string): Promise<void> {
+    const db = await getDB();
+    const data = JSON.parse(jsonStr);
+
+    if (data.bodyMetrics && Array.isArray(data.bodyMetrics)) {
+        for (const metric of data.bodyMetrics) {
+            await db.put('bodyMetrics', metric);
+        }
+    }
+    if (data.workouts && Array.isArray(data.workouts)) {
+        for (const workout of data.workouts) {
+            await db.put('workouts', workout);
+        }
+    }
+    if (data.exercises && Array.isArray(data.exercises)) {
+        for (const ex of data.exercises) {
+            await db.put('exercises', ex);
+        }
+    }
+}

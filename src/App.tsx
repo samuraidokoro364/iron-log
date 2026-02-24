@@ -3,8 +3,9 @@ import BodyMetricForm from './components/BodyMetricForm';
 import BodyMetricList from './components/BodyMetricList';
 import WorkoutForm from './components/WorkoutForm';
 import WorkoutList from './components/WorkoutList';
+import Settings from './components/Settings';
 
-type Tab = 'body' | 'workout';
+type Tab = 'body' | 'workout' | 'settings';
 
 function App() {
     const [activeTab, setActiveTab] = useState<Tab>('body');
@@ -38,6 +39,12 @@ function App() {
                 >
                     筋トレ
                 </button>
+                <button
+                    className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('settings')}
+                >
+                    設定・同期
+                </button>
             </div>
 
             <div className="tab-content">
@@ -46,11 +53,13 @@ function App() {
                         <BodyMetricForm onSaved={() => { refresh(); showToast('記録を保存しました'); }} />
                         <BodyMetricList key={refreshKey} onDeleted={() => { refresh(); showToast('削除しました'); }} />
                     </>
-                ) : (
+                ) : activeTab === 'workout' ? (
                     <>
                         <WorkoutForm onSaved={() => { refresh(); showToast('記録を保存しました'); }} />
                         <WorkoutList key={refreshKey} onDeleted={() => { refresh(); showToast('削除しました'); }} />
                     </>
+                ) : (
+                    <Settings onImported={() => { refresh(); showToast('データをインポートしました'); setActiveTab('workout'); }} />
                 )}
             </div>
 
