@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getWorkouts, deleteWorkout } from '../db';
-import type { WorkoutEntry } from '../types';
+import type { WorkoutEntry, BodyPart } from '../types';
+import { BODY_PARTS } from '../types';
 
 interface Props {
     onDeleted: () => void;
@@ -29,8 +30,10 @@ interface ExerciseGroup {
 }
 
 function groupByExercise(entries: WorkoutEntry[]): ExerciseGroup[] {
+    // setOrder でソートして入力順を保証
+    const sorted = [...entries].sort((a, b) => (a.setOrder ?? 9999) - (b.setOrder ?? 9999));
     const map = new Map<string, ExerciseGroup>();
-    for (const e of entries) {
+    for (const e of sorted) {
         const key = `${e.exercise}|${e.weightKg}`;
         if (!map.has(key)) {
             map.set(key, {
@@ -47,6 +50,27 @@ function groupByExercise(entries: WorkoutEntry[]): ExerciseGroup[] {
         if (e.note && !g.note) g.note = e.note;
     }
     return Array.from(map.values());
+}
+
+// 各部位の最終記録日を計算
+function getLastTrainedDates(entries: WorkoutEntry[]): Map<BodyPart, string> {
+    const map = new Map<BodyPart, string>();
+    for (const e of entries) {
+        const date = extractDate(e.recordedAt);
+        const current = map.get(e.bodyPart as BodyPart);
+        if (!current || date > current) {
+            map.set(e.bodyPart as BodyPart, date);
+        }
+    }
+    return map;
+}
+
+// 経過日数を計算
+function daysSince(dateStr: string, now: Date): number {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return 0;
+    const diff = now.getTime() - d.getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
 interface GroupedData {
@@ -128,9 +152,40 @@ export default function WorkoutList({ onDeleted }: Props) {
 
     const grouped = groupEntries(entries);
 
+    // 刺激不足アラート: 各部位の最終記録日を取得
+    const lastTrained = getLastTrainedDates(entries);
+    const now = new Date();
+    const staleBodyParts = BODY_PARTS.filter((bp) => {
+        const lastDate = lastTrained.get(bp);
+        if (!lastDate) return true; // 一度も記録がない
+        return daysSince(lastDate, now) >= 4;
+    }).map((bp) => {
+        const lastDate = lastTrained.get(bp);
+        const days = lastDate ? daysSince(lastDate, now) : null;
+        return { bodyPart: bp, days };
+    });
+
     return (
         <div className="history-section">
             <h3 className="history-title">履歴</h3>
+
+            {/* 刺激不足アラート */}
+            {staleBodyParts.length > 0 && (
+                <div className="stimulus-alert">
+                    <div className="stimulus-alert-title">⚠️ 刺激不足</div>
+                    <div className="stimulus-alert-parts">
+                        {staleBodyParts.map(({ bodyPart, days }) => (
+                            <span key={bodyPart} className="stimulus-alert-tag">
+                                {bodyPart}
+                                <span className="stimulus-alert-days">
+                                    {days !== null ? `${days}日` : '未記録'}
+                                </span>
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {grouped.length === 0 ? (
                 <p className="history-empty">記録なし</p>
             ) : (
@@ -169,7 +224,7 @@ export default function WorkoutList({ onDeleted }: Props) {
                                                                 ))}
                                                             </span>
                                                         </div>
-                                                        {eg.note && <div className="history-detail-note">{eg.note}</div>}
+                                                        {eg.note && <div className="history-detail-note">📝 {eg.note}</div>}
                                                         <button
                                                             className="btn-danger"
                                                             onClick={() => handleDeleteGroup(eg)}

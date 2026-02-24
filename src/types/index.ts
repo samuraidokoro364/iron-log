@@ -15,6 +15,7 @@ export interface WorkoutEntry {
     reps: number;
     note: string;
     recordedAt: string;
+    setOrder?: number;
 }
 
 export type BodyPart = '脚' | '胸' | '背中' | '肩' | '腕';

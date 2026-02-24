@@ -531,10 +531,59 @@ h3 {
 
 .history-detail-note {
     width: 100%;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    font-style: italic;
-    padding-left: 2px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    padding: 6px 10px;
+    margin-top: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 2px solid var(--text-muted);
+    border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+/* === Stimulus Alert === */
+.stimulus-alert {
+    background: rgba(255, 152, 0, 0.08);
+    border: 1px solid rgba(255, 152, 0, 0.25);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 16px;
+}
+
+.stimulus-alert-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #ff9800;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+}
+
+.stimulus-alert-parts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.stimulus-alert-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: rgba(255, 152, 0, 0.1);
+    border: 1px solid rgba(255, 152, 0, 0.2);
+    border-radius: var(--radius);
+    color: #ffb74d;
+    font-family: var(--font);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.stimulus-alert-days {
+    font-size: 0.65rem;
+    font-weight: 400;
+    color: #ff9800;
+    background: rgba(255, 152, 0, 0.12);
+    padding: 1px 6px;
+    border-radius: 8px;
 }
 
 /* === Toast / Feedback === */

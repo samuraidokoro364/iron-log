@@ -63,15 +63,16 @@ export default function WorkoutForm({ onSaved }: Props) {
             const noteText = note.trim();
             const timestamp = recordedAt.replace('T', ' ');
 
-            for (const r of sets) {
+            for (let i = 0; i < sets.length; i++) {
                 await addWorkout({
                     id: crypto.randomUUID(),
                     bodyPart,
                     exercise,
                     weightKg: weight,
-                    reps: r,
+                    reps: sets[i],
                     note: noteText,
                     recordedAt: timestamp,
+                    setOrder: i,
                 });
             }
             setSets([]);
