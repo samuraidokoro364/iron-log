@@ -540,6 +540,39 @@ h3 {
     border-radius: 0 var(--radius) var(--radius) 0;
 }
 
+/* === Body Part Filter === */
+.body-part-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.body-part-filter-chip {
+    padding: 7px 14px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.body-part-filter-chip:active {
+    border-color: var(--border-focus);
+}
+
+.body-part-filter-chip.selected {
+    background: rgba(192, 57, 43, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
 /* === Stimulus Alert === */
 .stimulus-alert {
     background: rgba(255, 152, 0, 0.08);

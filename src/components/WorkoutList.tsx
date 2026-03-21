@@ -116,6 +116,19 @@ export default function WorkoutList({ onDeleted }: Props) {
     const [entries, setEntries] = useState<WorkoutEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState<Set<string>>(new Set());
+    const [selectedParts, setSelectedParts] = useState<Set<BodyPart>>(new Set());
+
+    const togglePart = (bp: BodyPart) => {
+        setSelectedParts((prev) => {
+            const next = new Set(prev);
+            if (next.has(bp)) {
+                next.delete(bp);
+            } else {
+                next.add(bp);
+            }
+            return next;
+        });
+    };
 
     useEffect(() => {
         getWorkouts().then((data) => {
@@ -150,7 +163,10 @@ export default function WorkoutList({ onDeleted }: Props) {
 
     if (loading) return null;
 
-    const grouped = groupEntries(entries);
+    const filteredEntries = selectedParts.size > 0
+        ? entries.filter((e) => selectedParts.has(e.bodyPart as BodyPart))
+        : entries;
+    const grouped = groupEntries(filteredEntries);
 
     // 刺激不足アラート: 各部位の最終記録日を取得
     const lastTrained = getLastTrainedDates(entries);
@@ -168,6 +184,19 @@ export default function WorkoutList({ onDeleted }: Props) {
     return (
         <div className="history-section">
             <h3 className="history-title">履歴</h3>
+
+            {/* 部位フィルター */}
+            <div className="body-part-filter">
+                {BODY_PARTS.map((bp) => (
+                    <button
+                        key={bp}
+                        className={`body-part-filter-chip ${selectedParts.has(bp) ? 'selected' : ''}`}
+                        onClick={() => togglePart(bp)}
+                    >
+                        {bp}
+                    </button>
+                ))}
+            </div>
 
             {/* 刺激不足アラート */}
             {staleBodyParts.length > 0 && (
